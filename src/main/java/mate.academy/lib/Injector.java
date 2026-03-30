@@ -31,6 +31,9 @@ public class Injector {
             throw new RuntimeException("Injection failed: Class "
                     + clazz.getName() + " is not marked with @Component");
         }
+        if (clazzImplementationInstance == null) {
+            clazzImplementationInstance = createNewInstance(clazz);
+        }
         Field[] declaredFields = clazz.getDeclaredFields();
         for (Field field : declaredFields) {
             if (field.isAnnotationPresent(Inject.class)) {
@@ -44,9 +47,6 @@ public class Injector {
                             + clazz.getName() + ".Field: " + field.getName(), e);
                 }
             }
-        }
-        if (clazzImplementationInstance == null) {
-            clazzImplementationInstance = createNewInstance(clazz);
         }
         return clazzImplementationInstance;
     }
