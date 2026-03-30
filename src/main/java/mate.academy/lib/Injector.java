@@ -14,6 +14,11 @@ import mate.academy.service.impl.ProductServiceImpl;
 
 public class Injector {
     private static final Injector injector = new Injector();
+    private final Map<Class<?>, Class<?>> interfaceImplementations = Map.of(
+            ProductService.class, ProductServiceImpl.class,
+            ProductParser.class, ProductParserImpl.class,
+            FileReaderService.class, FileReaderServiceImpl.class
+    );
     private Map<Class<?>, Object> instances = new HashMap<>();
 
     public static Injector getInjector() {
@@ -23,6 +28,10 @@ public class Injector {
     public Object getInstance(Class<?> interfaceClazz) {
         Object clazzImplementationInstance = null;
         Class<?> clazz = findImplementation(interfaceClazz);
+        if (!clazz.isAnnotationPresent(Component.class)) {
+            throw new RuntimeException("Injection failed: Class "
+                    + clazz.getName() + " is not marked with @Component");
+        }
         Field[] declaredFields = clazz.getDeclaredFields();
         for (Field field : declaredFields) {
             if (field.isAnnotationPresent(Inject.class)) {
@@ -47,10 +56,9 @@ public class Injector {
         if (instances.containsKey(clazz)) {
             return instances.get(clazz);
         }
-        Constructor<?> constructor = null;
 
         try {
-            constructor = clazz.getConstructor();
+            Constructor<?> constructor = clazz.getConstructor();
             Object object = constructor.newInstance();
             instances.put(clazz, object);
             return object;
@@ -61,12 +69,8 @@ public class Injector {
     }
 
     private Class<?> findImplementation(Class<?> interfaceClazz) {
-        Map<Class<?>, Class<?>> implementationsMap = new HashMap<>();
-        implementationsMap.put(ProductService.class, ProductServiceImpl.class);
-        implementationsMap.put(ProductParser.class, ProductParserImpl.class);
-        implementationsMap.put(FileReaderService.class, FileReaderServiceImpl.class);
         if (interfaceClazz.isInterface()) {
-            return implementationsMap.get(interfaceClazz);
+            return interfaceImplementations.get(interfaceClazz);
         }
         return interfaceClazz;
     }
